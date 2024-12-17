@@ -14,12 +14,13 @@ const loading = ref(false)
 const showAddForm = ref(false)
 const editingExercise = ref(null)
 const newExercise = ref({
+  id: '',
   name: '',
-  sets: 3,
-  reps: 10,
-  weight: 20,
+  sets: 0,
+  reps: 0,
+  weight: 0,
   distance: 0,
-  duration: 30,
+  duration: 0,
   category: WORKOUT_TYPES.STRENGTH
 })
 
@@ -40,7 +41,7 @@ const categoryOptions = [
 // 计算总进度
 const totalProgress = computed(() => {
   const exercises = workoutPlan.value.exercises
-  if (exercises.length === 0) return 0
+  if (exercises == null || exercises.length === 0) return 0
 
   const strengthExercises = exercises.filter(e => e.category === WORKOUT_TYPES.STRENGTH)
   const cardioExercises = exercises.filter(e => e.category === WORKOUT_TYPES.CARDIO)
@@ -68,7 +69,7 @@ const fetchTodayWorkout = async () => {
   try {
     loading.value = true
     const res = await workoutApi.getTodayWorkout()
-    if (res.code === 0) {
+    if (res.code === 0 && res.data != null) {
       workoutPlan.value = res.data
     } else {
       console.error('获取训练计划失败:', res.message)
@@ -88,8 +89,7 @@ const completeSet = async (exercise) => {
     const newCompleted = exercise.completed + 1
     const res = await workoutApi.updateExerciseProgress(exercise.id, newCompleted)
     if (res.code === 0) {
-      // 直接替换整个训练计划
-      workoutPlan.value = res.data
+      await fetchTodayWorkout()
     }
   } catch (error) {
     console.error('更新进度失败:', error)
@@ -104,8 +104,7 @@ const undoSet = async (exercise) => {
     const newCompleted = exercise.completed - 1
     const res = await workoutApi.updateExerciseProgress(exercise.id, newCompleted)
     if (res.code === 0) {
-      // 直接替换整个训练计划
-      workoutPlan.value = res.data
+      await fetchTodayWorkout()
     }
   } catch (error) {
     console.error('更新进度失败:', error)
@@ -119,8 +118,7 @@ const addExercise = async () => {
   try {
     const res = await workoutApi.addExercise(newExercise.value)
     if (res.code === 0) {
-      // 直接使用返回的完整训练计划
-      workoutPlan.value = res.data
+      await fetchTodayWorkout()
       resetNewExercise()
       showAddForm.value = false
     }
@@ -164,11 +162,11 @@ const removeExercise = async (exerciseId) => {
 const resetNewExercise = () => {
   newExercise.value = {
     name: '',
-    sets: 3,
-    reps: 10,
-    weight: 20,
+    sets: 0,
+    reps: 0,
+    weight: 0,
     distance: 0,
-    duration: 30,
+    duration: 0,
     category: WORKOUT_TYPES.STRENGTH
   }
 }
@@ -202,26 +200,41 @@ const completeExercise = async (exercise) => {
   }
 }
 
+
+// 判断项目是否完成
+function isCompleted(exercise) {
+  if (exercise.category === WORKOUT_TYPES.STRENGTH) {
+    return exercise.completed >= exercise.sets
+  }
+  return !!exercise.completed
+}
+
 // 修改排序逻辑
 const sortedExercises = computed(() => {
-  return [...workoutPlan.value.exercises].sort((a, b) => {
-    // 判断是否完成
-    const isCompleted = (exercise) => {
-      if (exercise.category === WORKOUT_TYPES.STRENGTH) {
-        return exercise.completed >= exercise.sets
-      }
-      return exercise.completed
-    }
+  const exercises = workoutPlan.value.exercises
+  if (exercises == null || exercises.length === 0) return 0
 
+  return [...workoutPlan.value.exercises].sort((a, b) => {
+    // 首先判断该项目是否已经完成
     const completedA = isCompleted(a)
     const completedB = isCompleted(b)
 
-    // 如果完成状态相同，按照添加顺序排序（使用id）
-    if (completedA === completedB) {
-      return b.id - a.id  // 新添加的排在前面
+    // 已完成的排在最后
+    if (completedA !== completedB) {
+      return completedA ? 1 : -1
     }
-    // 已完成的排在后面
-    return completedA ? 1 : -1
+
+    // 如果都未完成，先按 category 排序（CARDIO 优先）
+    if (!completedA && !completedB) {
+      if (a.category !== b.category) {
+        return a.category === WORKOUT_TYPES.CARDIO ? -1 : 1
+      }
+      // 同类型按 id 倒序
+      return b.id - a.id
+    }
+
+    // 如果都已完成，仍按 id 倒序
+    return b.id - a.id
   })
 })
 
@@ -288,7 +301,7 @@ const isValidNewExercise = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="space-y-4 workout-container">
     <!-- 优化顶部操作栏样式 -->
     <div class="bg-white shadow-sm p-4 sm:p-5 sm:rounded-xl">
       <div class="flex items-center justify-between">
@@ -579,6 +592,34 @@ const isValidNewExercise = computed(() => {
 </template>
 
 <style scoped>
+/* 添加容器样式 */
+.workout-container {
+  max-height: calc(100vh - 4rem); /* 留出上下边距 */
+  overflow-y: auto;
+  padding: 1rem;
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #e2e8f0 #f8fafc; /* Firefox */
+}
+
+/* 自定义滚动条样式 (Webkit浏览器) */
+.workout-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.workout-container::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 3px;
+}
+
+.workout-container::-webkit-scrollbar-thumb {
+  background-color: #e2e8f0;
+  border-radius: 3px;
+
+  &:hover {
+    background-color: #cbd5e1;
+  }
+}
+
 /* 移除原有的过渡动画样式 */
 .space-y-3 {
   position: relative;
