@@ -3,7 +3,7 @@ import router from '../router'  // 直接导入 router 实例
 
 // 创建 axios 实例
 const request = axios.create({
-  baseURL: 'http://192.168.15.91:8080/api',  // API 的基础URL
+  baseURL: import.meta.env.VITE_API_BASE_URL,  // 从环境变量获取基础URL
   timeout: 5000  // 请求超时时间
 })
 

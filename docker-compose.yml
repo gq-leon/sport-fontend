@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  workout-web:
+    build: .
+    ports:
+      - "80:80"
+    environment:
+      - API_URL=http://workout-api:8080
+    depends_on:
+      - workout-api
+    networks:
+      - workout-network
+
+  workout-api:
+    image: your-backend-image
+    ports:
+      - "8080:8080"
+    networks:
+      - workout-network
+    # 其他后端服务配置...
+
+networks:
+  workout-network:
+    driver: bridge 
