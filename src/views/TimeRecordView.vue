@@ -64,9 +64,11 @@ onUnmounted(() => {
 
 // 判断是否可以打卡
 const canClockIn = computed(() => {
+  if (!clockInRecords.value) return true
+  
   const today = new Date().toDateString()
   const todayRecords = clockInRecords.value.filter(record =>
-      new Date(record.date).toDateString() === today
+    new Date(record.date).toDateString() === today
   )
   return todayRecords.length < 2
 })
@@ -77,10 +79,11 @@ const fetchClockInRecords = async () => {
     loading.value = true
     const res = await workoutApi.getClockInRecords()
     if (res.code === 0) {
-      clockInRecords.value = res.data
+      clockInRecords.value = Array.isArray(res.data) ? res.data : []
     }
   } catch (error) {
     console.error('获取打卡记录失败:', error)
+    clockInRecords.value = []
   } finally {
     loading.value = false
   }
