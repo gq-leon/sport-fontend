@@ -184,7 +184,7 @@ const completeExercise = async (exercise) => {
   try {
     const res = await workoutApi.updateExercise({
       ...exercise,
-      completed: true
+      completed: 1
     })
     if (res.code === 0) {
       const index = workoutPlan.value.exercises.findIndex(e => e.id === exercise.id)

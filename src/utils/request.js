@@ -1,8 +1,9 @@
 import axios from 'axios'
+import router from '../router'  // 直接导入 router 实例
 
 // 创建 axios 实例
 const request = axios.create({
-  baseURL: 'http://127.0.0.1:8080/api',  // API 的基础URL
+  baseURL: 'http://192.168.15.91:8080/api',  // API 的基础URL
   timeout: 5000  // 请求超时时间
 })
 
@@ -32,15 +33,31 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   response => {
     const res = response.data
-    // 这里可以统一处理响应
     if (res.code === 200) {
       return res
     }
-    // 处理错误响应
+
+    // token 过期或无效
+    if (res.code === 401) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('tokenExpireTime')
+      if (router.currentRoute.value.name !== 'login') {
+        window.location.href = '/login'  // 使用 window.location.href 进行跳转
+      }
+      return Promise.reject(new Error(res.message || '认证失败，请重新登录'))
+    }
+    
     console.error('接口返回错误:', res.message)
     return Promise.reject(new Error(res.message || '接口错误'))
   },
   error => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('tokenExpireTime')
+      if (router.currentRoute.value.name !== 'login') {
+        window.location.href = '/login'  // 使用 window.location.href 进行跳转
+      }
+    }
     console.error('响应错误:', error)
     return Promise.reject(error)
   }

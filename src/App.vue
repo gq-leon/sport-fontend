@@ -1,8 +1,15 @@
 <script setup>
-import { ref } from 'vue'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { ChartBarIcon, ClockIcon, ClipboardIcon, UserIcon } from '@heroicons/vue/24/outline'
 
-const active = ref(0)
+const route = useRoute()
+
+// 计算是否显示底部导航栏
+const showNavBar = computed(() => {
+  // 在登录页面不显示导航栏
+  return route.name !== 'login'
+})
 </script>
 
 <template>
@@ -13,7 +20,7 @@ const active = ref(0)
       </transition>
     </router-view>
     
-    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-100 shadow-lg z-50">
+    <nav v-if="showNavBar" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
       <div class="grid grid-cols-4 h-16">
         <router-link 
           to="/workout" 
