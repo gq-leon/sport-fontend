@@ -72,7 +72,6 @@ const realApi = {
             const res = await request.get('/v1/attendance')
             return {code: 0, data: res.data, message: res.message}
         } catch (error) {
-            console.error('获取打卡记录失败:', error)
             return {code: -1, message: error.message || '获取打卡记录失败'}
         }
     },
@@ -85,22 +84,40 @@ const realApi = {
         const record = {
             date: now.toLocaleDateString('zh-CN', {
                 year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
-            }).replace('星期', ' 星期'),
-            time: now.toLocaleTimeString('zh-CN', {
+            }).replace('星期', ' 星期'), time: now.toLocaleTimeString('zh-CN', {
                 hour: '2-digit', minute: '2-digit', second: '2-digit'
-            }),
-            type: hour < 12 ? '上午' : '下午',
-            location: locationMap[location] || '未知地点'  // 确保始终有地点值
+            }), type: hour < 12 ? '上午' : '下午', location: locationMap[location] || '未知地点'  // 确保始终有地点值
         }
 
         try {
-            const res = await request.post('/v1/attendance',record)
+            const res = await request.post('/v1/attendance', record)
             return {code: 0, data: res.data, message: res.message}
         } catch (error) {
-            console.error('获取打卡记录失败:', error)
             return {code: -1, message: error.message || '获取打卡记录失败'}
         }
     },
+
+
+    // 获取月度训练记录
+    async getMonthWorkouts(date) {
+        try {
+            const res = await request.post('/v1/calender/month-workouts', {date: date})
+            return {code: 0, data: res.data, message: res.message}
+        } catch (error) {
+            return {code: -1, message: error.message || '获取月度训练失败'}
+        }
+    },
+
+    // 获取指定日期的训练记录
+    async getWorkoutsByDate(date) {
+        try {
+            const res = await request.post('/v1/calender/workouts', {date: date})
+            return {code: 0, data: res.data || {exercises: []}, message: res.message}
+        } catch (error) {
+            return {code: -1, message: error.message || '获取指定日期训练失败'}
+        }
+    },
+
 }
 
 // 根据环境选择使用mock还是真实API
@@ -141,10 +158,9 @@ export const workoutApi = {
     },
 
     // 获取月度训练记录
-    getMonthWorkouts(year, month) {
-        return api.getMonthWorkouts(year, month)
+    getMonthWorkouts(date) {
+        return api.getMonthWorkouts(date)
     },
-
 
     // 获取打卡记录
     getClockInRecords() {

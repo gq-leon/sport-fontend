@@ -115,12 +115,18 @@ const isSelectedWorkout = (workout) => {
   return selectedDate.value?.toDateString() === new Date(workout.date).toDateString()
 }
 
+const formattedDate = (date) => {
+  const year = date.value.getFullYear();
+  const month = String(date.value.getMonth() + 1).padStart(2, '0');
+  const day = String(date.value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // 获取月度训练记录
 const fetchMonthWorkouts = async () => {
   try {
-    const year = currentDate.value.getFullYear()
-    const month = currentDate.value.getMonth()
-    const res = await workoutApi.getMonthWorkouts(year, month)
+    const date = formattedDate(currentDate);
+    const res = await workoutApi.getMonthWorkouts(date)
     if (res.code === 0) {
       // 直接使用训练历史记录
       workouts.value = res.data.map(record => ({
@@ -140,7 +146,8 @@ const fetchMonthWorkouts = async () => {
 const selectDate = async (day) => {
   selectedDate.value = day.date
   try {
-    const res = await workoutApi.getWorkoutsByDate(day.date)
+    const date = formattedDate(selectedDate)
+    const res = await workoutApi.getWorkoutsByDate(date)
     if (res.code === 0) {
       selectedDateWorkouts.value = {
         timeSegments: res.data.timeSegments || [],
