@@ -491,7 +491,7 @@ const DayCell = defineComponent({
                   class="text-sm px-2 py-0.5 rounded-full"
                   :class="exercise.completed ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'"
               >
-                {{ exercise.completed ? '已完成' : '进行中' }}
+                {{ exercise.completed ? '已完成' : '未完成' }}
               </span>
               </div>
             </template>
