@@ -22,7 +22,7 @@
           </div>
         </div>
         <div class="ml-4 flex-1">
-          <h2 class="text-lg font-semibold text-gray-900">用户名</h2>
+          <h2 class="text-lg font-semibold text-gray-900">Leon</h2>
           <p class="text-sm text-gray-500 mt-1">继续加油运动吧！</p>
         </div>
         <ChevronRightIcon class="w-5 h-5 text-gray-400 transition-transform duration-200 group-hover:translate-x-1" />
@@ -102,23 +102,20 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { 
-  CalendarIcon, 
-  ChartBarIcon, 
+import {ref, onMounted} from 'vue'
+import {
+  CalendarIcon,
+  ChartBarIcon,
   Cog6ToothIcon as CogIcon,
   ChevronRightIcon,
   PencilIcon
 } from '@heroicons/vue/24/outline'
-import { authApi } from '../api/auth'
+import {authApi} from '../api/auth'
+import {workoutApi} from "@/api/workout.js";
 
 const showLogoutConfirm = ref(false)
 
-const stats = [
-  { label: '运动天数', value: '12', type: 'days' },
-  { label: '累计时长(h)', value: '36', type: 'hours' },
-  { label: '连续天数', value: '3', type: 'streak' }
-]
+const stats = ref([])
 
 const menuItems = [
   {
@@ -155,6 +152,21 @@ const handleLogout = async () => {
     console.error('退出登录失败:', error)
   }
 }
+
+const fetchStats = async () => {
+  try {
+    const res = await workoutApi.getProfileStats()
+    if (res.code === 0) {
+      stats.value = res.data || []
+    }
+  } catch (error) {
+    console.log('获取个人信息统计失败:', error)
+  }
+}
+
+onMounted(() => {
+  fetchStats()
+})
 </script>
 
 <style scoped>
@@ -188,5 +200,9 @@ html {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.profile-container {
+  width: 100%;
 }
 </style> 

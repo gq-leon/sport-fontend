@@ -118,6 +118,16 @@ const realApi = {
         }
     },
 
+    // 获取当前月统计
+    async getProfileStats() {
+        try {
+            const res = await request.get('/v1/stats/profile')
+            return {code: 0, data: res.data, message: res.message}
+        } catch (error) {
+            return {code: -1, message: error.message || '获取指定日期训练失败'}
+        }
+    },
+
 }
 
 // 根据环境选择使用mock还是真实API
@@ -172,6 +182,10 @@ export const workoutApi = {
         return api.clockIn(location)
     },
 
+    // 月度训练统计
+    getProfileStats() {
+        return api.getProfileStats()
+    },
 
     // 添加获取统计数据的方法
     getWorkoutStats(type) {
